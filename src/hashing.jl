@@ -1,31 +1,30 @@
-using Base: BitInteger64
 # This file is a part of Julia. License is MIT: https://julialang.org/license
 
-## hashing a single value ##
+## shashing a single value ##
 
 """
-    hash(x[, h::UInt])
+    shash(x[, h::UInt])
 
-Compute an integer hash code such that `isequal(x,y)` implies `hash(x)==hash(y)`. The
-optional second argument `h` is a hash code to be mixed with the result.
+Compute an integer shash code such that `isequal(x,y)` implies `shash(x)==shash(y)`. The
+optional second argument `h` is a shash code to be mixed with the result.
 
-New types should implement the 2-argument form, typically by calling the 2-argument `hash`
-method recursively in order to mix hashes of the contents with each other (and with `h`).
-Typically, any type that implements `hash` should also implement its own `==` (hence
+New types should implement the 2-argument form, typically by calling the 2-argument `shash`
+method recursively in order to mix shashes of the contents with each other (and with `h`).
+Typically, any type that implements `shash` should also implement its own `==` (hence
 `isequal`) to guarantee the property mentioned above. Types supporting subtraction
-(operator `-`) should also implement [`widen`](@ref), which is required to hash
+(operator `-`) should also implement [`widen`](@ref), which is required to shash
 values inside heterogeneous arrays.
 """
-hash(x::Any) = hash(x, zero(UInt))
-hash(w::WeakRef, h::UInt) = hash(w.value, h)
+shash(x::Any) = shash(x, zero(UInt))
+shash(w::WeakRef, h::UInt) = shash(w.value, h)
 
-## hashing general objects ##
+## shashing general objects ##
 
-hash(@nospecialize(x), h::UInt) = hash_uint(3h - objectid(x))
+shash(@nospecialize(x), h::UInt) = shash_uint(3h - objectid(x))
 
-## core data hashing functions ##
+## core data shashing functions ##
 
-function hash_64_64(n::UInt64)
+function shash_64_64(n::UInt64)
     a::UInt64 = n
     a = ~a + a << 21
     a =  a ⊻ a >> 24
@@ -37,7 +36,7 @@ function hash_64_64(n::UInt64)
     return a
 end
 
-function hash_64_32(n::UInt64)
+function shash_64_32(n::UInt64)
     a::UInt64 = n
     a = ~a + a << 18
     a =  a ⊻ a >> 31
@@ -48,7 +47,7 @@ function hash_64_32(n::UInt64)
     return a % UInt32
 end
 
-function hash_32_32(n::UInt32)
+function shash_32_32(n::UInt32)
     a::UInt32 = n
     a = a + 0x7ed55d16 + a << 12
     a = a ⊻ 0xc761c23c ⊻ a >> 19
@@ -60,19 +59,19 @@ function hash_32_32(n::UInt32)
 end
 
 if UInt === UInt64
-    hash_uint64(x::UInt64) = hash_64_64(x)
-    hash_uint(x::UInt)     = hash_64_64(x)
+    shash_uint64(x::UInt64) = shash_64_64(x)
+    shash_uint(x::UInt)     = shash_64_64(x)
 else
-    hash_uint64(x::UInt64) = hash_64_32(x)
-    hash_uint(x::UInt)     = hash_32_32(x)
+    shash_uint64(x::UInt64) = shash_64_32(x)
+    shash_uint(x::UInt)     = shash_32_32(x)
 end
 
-## symbol & expression hashing ##
+## symbol & expression shashing ##
 
 if UInt === UInt64
-    hash(x::Expr, h::UInt) = hash(x.args, hash(x.head, h + 0x83c7900696d26dc6))
-    hash(x::QuoteNode, h::UInt) = hash(x.value, h + 0x2c97bf8b3de87020)
+    shash(x::Expr, h::UInt) = shash(x.args, shash(x.head, h + 0x83c7900696d26dc6))
+    shash(x::QuoteNode, h::UInt) = shash(x.value, h + 0x2c97bf8b3de87020)
 else
-    hash(x::Expr, h::UInt) = hash(x.args, hash(x.head, h + 0x96d26dc6))
-    hash(x::QuoteNode, h::UInt) = hash(x.value, h + 0x469d72af)
+    shash(x::Expr, h::UInt) = shash(x.args, shash(x.head, h + 0x96d26dc6))
+    shash(x::QuoteNode, h::UInt) = shash(x.value, h + 0x469d72af)
 end
