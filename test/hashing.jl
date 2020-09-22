@@ -33,8 +33,8 @@ end
 for T = types[2:end],
     x = vals,
     a = coerce(T, x)
-    @test hash(a,zero(UInt)) == invoke(hash, Tuple{Real, UInt}, a, zero(UInt))
-    @test hash(a,one(UInt)) == invoke(hash, Tuple{Real, UInt}, a, one(UInt))
+    @test shash(a,zero(UInt)) == invoke(shash, Tuple{Real, UInt}, a, zero(UInt))
+    @test shash(a,one(UInt)) == invoke(shash, Tuple{Real, UInt}, a, one(UInt))
 end
 
 for T = types,
@@ -44,25 +44,25 @@ for T = types,
     b = coerce(S, x)
     #println("$(typeof(a)) $a")
     #println("$(typeof(b)) $b")
-    @test isequal(a,b) == (hash(a)==hash(b))
+    @test isequal(a,b) == (shash(a)==shash(b))
     # for y=vals
     #     println("T=$T; S=$S; x=$x; y=$y")
     #     c = convert(T,x//y)
     #     d = convert(S,x//y)
-    #     @test !isequal(a,b) || hash(a)==hash(b)
+    #     @test !isequal(a,b) || shash(a)==shash(b)
     # end
 end
 
 # issue #8619
-@test hash(nextfloat(2.0^63)) == hash(UInt64(nextfloat(2.0^63)))
-@test hash(prevfloat(2.0^64)) == hash(UInt64(prevfloat(2.0^64)))
+@test shash(nextfloat(2.0^63)) == shash(UInt64(nextfloat(2.0^63)))
+@test shash(prevfloat(2.0^64)) == shash(UInt64(prevfloat(2.0^64)))
 
 # issue #9264
-@test hash(1//6,zero(UInt)) == invoke(hash, Tuple{Real, UInt}, 1//6, zero(UInt))
-@test hash(1//6) == hash(big(1)//big(6))
-@test hash(1//6) == hash(0x01//0x06)
+@test shash(1//6,zero(UInt)) == invoke(shash, Tuple{Real, UInt}, 1//6, zero(UInt))
+@test shash(1//6) == shash(big(1)//big(6))
+@test shash(1//6) == shash(0x01//0x06)
 
-# hashing collections (e.g. issue #6870)
+# shashing collections (e.g. issue #6870)
 vals = Any[
     [1,2,3,4], [1 3;2 4], Any[1,2,3,4], [1,3,2,4],
     [1.0, 2.0, 3.0, 4.0], BigInt[1, 2, 3, 4],
@@ -92,18 +92,14 @@ vals = Any[
     # issue #16364
     1:4, 1:1:4, 1:-1:0, 1.0:4.0, 1.0:1.0:4.0, range(1, stop=4, length=4),
     'a':'e', ['a', 'b', 'c', 'd', 'e'],
-    # check that hash is still consistent with heterogeneous arrays for which - is defined
+    # check that shash is still consistent with heterogeneous arrays for which - is defined
     # for some pairs and not others
     ["a", "b", 1, 2], ["a", 1, 2], ["a", "b", 2, 2], ["a", "a", 1, 2], ["a", "b", 2, 3]
 ]
 
-for a in vals, b in vals
-    @test isequal(a,b) == (hash(a)==hash(b))
-end
-
 for a in vals
     if a isa AbstractArray
-        @test hash(a) == hash(Array(a)) == hash(Array{Any}(a))
+        @test shash(a) == shash(Array(a)) == shash(Array{Any}(a))
     end
 end
 
@@ -135,35 +131,33 @@ vals = Any[
 
 for a in vals
     b = Array(a)
-    @test hash(convert(Array{Any}, a)) == hash(b)
-    @test hash(convert(Array{supertype(eltype(a))}, a)) == hash(b)
-    @test hash(convert(Array{Float64}, a)) == hash(b)
-    @test hash(sparse(a)) == hash(b)
+    @test shash(convert(Array{Any}, a)) == shash(b)
+    @test shash(convert(Array{supertype(eltype(a))}, a)) == shash(b)
+    @test shash(convert(Array{Float64}, a)) == shash(b)
+    @test shash(sparse(a)) == shash(b)
     if !any(x -> isequal(x, -0.0), a)
-        @test hash(convert(Array{Int}, a)) == hash(b)
+        @test shash(convert(Array{Int}, a)) == shash(b)
         if all(x -> typemin(Int8) <= x <= typemax(Int8), a)
-            @test hash(convert(Array{Int8}, a)) == hash(b)
+            @test shash(convert(Array{Int8}, a)) == shash(b)
         end
     end
 end
 
-# Test that overflow does not give inconsistent hashes with heterogeneous arrays
-@test hash(Any[Int8(1), Int8(2), 255]) == hash([1, 2, 255])
-@test hash(Any[Int8(127), Int8(-128), 129, 130]) ==
-    hash([127, -128, 129, 130]) != hash([127,  128, 129, 130])
+# Test that overflow does not give inconsistent shashes with heterogeneous arrays
+@test shash(Any[Int8(1), Int8(2), 255]) == shash([1, 2, 255])
+@test shash(Any[Int8(127), Int8(-128), 129, 130]) ==
+    shash([127, -128, 129, 130]) != shash([127,  128, 129, 130])
 
-# Test hashing sparse matrix with type which does not support -
+# Test shashing sparse matrix with type which does not support -
 struct CustomHashReal
     x::Float64
 end
-Base.hash(x::CustomHashReal, h::UInt) = hash(x.x, h)
-Base.:(==)(x::CustomHashReal, y::Number) = x.x == y
-Base.:(==)(x::Number, y::CustomHashReal) = x == y.x
+StableHashes.shash(x::CustomHashReal, h::UInt) = shash(x.x, h)
 Base.zero(::Type{CustomHashReal}) = CustomHashReal(0.0)
 Base.zero(x::CustomHashReal) = zero(CustomHashReal)
 
 let a = sparse([CustomHashReal(0), CustomHashReal(3), CustomHashReal(3)])
-    @test hash(a) == hash(Array(a))
+    @test shash(a) == shash(Array(a))
 end
 
 vals = Any[
@@ -174,28 +168,28 @@ vals = Any[
 ]
 
 for a in vals
-    @test hash(Array(a)) == hash(a)
+    @test shash(Array(a)) == shash(a)
 end
 
-@test hash(SubString("--hello--",3,7)) == hash("hello")
-@test hash(:(X.x)) == hash(:(X.x))
-@test hash(:(X.x)) != hash(:(X.y))
+@test shash(SubString("--hello--",3,7)) == shash("hello")
+@test shash(:(X.x)) == shash(:(X.x))
+@test shash(:(X.x)) != shash(:(X.y))
 
-@test hash([1,2]) == hash(view([1,2,3,4],1:2))
+@test shash([1,2]) == shash(view([1,2,3,4],1:2))
 
 let a = QuoteNode(1), b = QuoteNode(1.0)
-    @test (hash(a)==hash(b)) == (a==b)
+    @test (shash(a)==shash(b)) == (a==b)
 end
 
 let a = Expr(:block, Core.TypedSlot(1, Any)),
     b = Expr(:block, Core.TypedSlot(1, Any)),
     c = Expr(:block, Core.TypedSlot(3, Any))
-    @test a == b && hash(a) == hash(b)
-    @test a != c && hash(a) != hash(c)
-    @test b != c && hash(b) != hash(c)
+    @test a == b && shash(a) == shash(b)
+    @test a != c && shash(a) != shash(c)
+    @test b != c && shash(b) != shash(c)
 end
 
-@test hash(Dict(),hash(Set())) != hash(Set(),hash(Dict()))
+@test shash(Dict(),shash(Set())) != shash(Set(),shash(Dict()))
 
 # issue 15659
 for prec in [3, 11, 15, 16, 31, 32, 33, 63, 64, 65, 254, 255, 256, 257, 258, 1023, 1024, 1025],
@@ -211,7 +205,7 @@ for prec in [3, 11, 15, 16, 31, 32, 33, 63, 64, 65, 254, 255, 256, 257, 258, 102
 end
 
 # issue #20744
-@test hash(:c, hash(:b, hash(:a))) != hash(:a, hash(:b, hash(:c)))
+@test shash(:c, shash(:b, shash(:a))) != shash(:a, shash(:b, shash(:c)))
 
 # issue #5849, objectid of types
 @test Vector === (Array{T,1} where T)
@@ -234,9 +228,9 @@ let p1 = Ptr{Int8}(1), p2 = Ptr{Int32}(1), p3 = Ptr{Int8}(2)
     @test p1 == p2
     @test !isequal(p1, p2)
     @test p1 != p3
-    @test hash(p1) != hash(p2)
-    @test hash(p1) != hash(p3)
-    @test hash(p1) == hash(Ptr{Int8}(1))
+    @test shash(p1) != shash(p2)
+    @test shash(p1) != shash(p3)
+    @test shash(p1) == shash(Ptr{Int8}(1))
 
     @test p1 < p3
     @test !(p1 < p2)
