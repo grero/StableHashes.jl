@@ -245,3 +245,4 @@ ss = ["the","quick","brown","fox","jumped","over","the","lazy","dog"]
 bb = [1, 1.0, 4.5, 2]
 @test shash(bb) == 0xf060ee586c0d8c95
 @test shash(1:5) == 0xae2b87f25dee4923
+@test shash(true) == 0x02011ce34bce797f
