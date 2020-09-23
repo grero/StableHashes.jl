@@ -237,3 +237,11 @@ let p1 = Ptr{Int8}(1), p2 = Ptr{Int32}(1), p3 = Ptr{Int8}(2)
     @test isless(p1, p3)
     @test_throws MethodError isless(p1, p2)
 end
+
+
+# specific values
+ss = ["the","quick","brown","fox","jumped","over","the","lazy","dog"]
+@test shash(ss) == 0x7627314160796cbd
+bb = [1, 1.0, 4.5, 2]
+@test shash(bb) == 0xf060ee586c0d8c95
+@test shash(1:5) == 0xae2b87f25dee4923
