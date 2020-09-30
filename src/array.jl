@@ -1,3 +1,8 @@
+
+# this is a hack to preserve objectid of AbstractArray as it was in 1.4.2
+# i.e. objectid(AbstractArray) == 0x08a0029cf36033c7
+shash(::Type{AbstractArray}, h::UInt64) = shash_uint(3h - 0x08a0029cf36033c7)
+
 function shash(A::AbstractArray, h::UInt)
     h = shash(AbstractArray, h)
     # Axes are themselves AbstractArrays, so hashing them directly would stack overflow
