@@ -241,7 +241,16 @@ end
 
 # specific values
 ss = ["the","quick","brown","fox","jumped","over","the","lazy","dog"]
-@test shash(ss) == 0x7627314160796cbd
+@test shash(ss) == 0xebbdec378ca68ecb
 bb = [1, 1.0, 4.5, 2]
-@test shash(bb) == 0xf060ee586c0d8c95
-@test shash(1:5) == 0xae2b87f25dee4923
+@test shash(bb) == 0xc8956d61875e33a8
+@test shash(1:5) == 0x7523ed0aee65cb92
+@test shash(1=>2) == 0x3fd8c7581d9d7bdc
+
+if Base.VERSION < v"1.5.0"
+	@test shash(ss[1]) == hash(ss[1])
+	@test shash(ss) == hash(ss)
+	@test shash(bb) == hash(bb)
+	@test shash(1:5) == hash(1:5)
+	@test shash(1=>2) == hash(1=>2)
+end
