@@ -1,3 +1,11 @@
+const cartindexhash_seed = UInt == UInt64 ? 0xd60ca92f8284b8b0 : 0xf2ea7c2e
+function shash(ci::CartesianIndex, h::UInt)
+	h += cartindexhash_seed
+	for i in ci.I
+		h = shash(i, h)
+	end
+	return h
+end
 
 # this is a hack to preserve objectid of AbstractArray as it was in 1.4.2
 # i.e. objectid(AbstractArray) == 0x08a0029cf36033c7
