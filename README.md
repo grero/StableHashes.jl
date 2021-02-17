@@ -4,4 +4,4 @@
 
 An effort to preserve the julia hashing functionailty as it was under v.1.4.2.
 
-To avoid conflict with the standard julia hashing machinery, StableHashes exports the function `shash`, which can e used as a drop-in replacement for the standard `hash` function, and will return hashes as though they were computed under julia v.1.4.2
+To avoid conflict with the standard julia hashing machinery, `StableHashes` exports the function `shash`, which can be used as a drop-in replacement for the standard `hash` function, and will return hashes as though they were computed under julia v.1.4.2
